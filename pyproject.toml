@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "analyst-lens-poc"
+version = "1.0.0"
+description = "AI-powered geopolitical intelligence platform - The Analyst Lens"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116.0,<1.0.0",
+  "uvicorn[standard]>=0.35.0,<1.0.0",
+  "sqlalchemy>=2.0.41,<3.0.0",
+  "pydantic[email]>=2.11.0,<3.0.0",
+  "pydantic-settings>=2.10.0,<3.0.0",
+  "alembic>=1.16.0,<2.0.0",
+  "psycopg2-binary>=2.9.10,<3.0.0",
+  "bcrypt>=4.2.0,<5.0.0",
+  "python-jose[cryptography]>=3.4.0,<4.0.0",
+  "python-multipart>=0.0.20,<1.0.0",
+  "feedparser>=6.0.0,<7.0.0",
+  "httpx>=0.28.0,<1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.0,<9.0.0",
+  "httpx>=0.28.0,<1.0.0"
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["app", "app.routers", "app.services"]
+
