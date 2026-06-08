@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # AI mode: 'mock' keeps demo-safe deterministic responses; 'live' enables OpenAI calls.
+    ai_mode: str = "mock"
+
     model_config = SettingsConfigDict(env_prefix="AL_", env_file=".env", extra="ignore")
 
 

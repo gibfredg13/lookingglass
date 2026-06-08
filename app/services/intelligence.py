@@ -18,6 +18,7 @@ import feedparser
 import httpx
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models import (
     IntelligenceSource, RawIntelItem, Event, Signal, EventTimelineEntry,
     compute_event_fingerprint, Tag, Source
@@ -55,8 +56,9 @@ class AIAnalyzer:
     """AI-powered content analysis using OpenAI or fallback heuristics."""
 
     def __init__(self):
+        settings = get_settings()
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.use_ai = bool(self.api_key)
+        self.use_ai = settings.ai_mode.lower() == "live" and bool(self.api_key)
 
     async def analyze_content(self, title: str, content: str, source_context: dict) -> dict:
         """

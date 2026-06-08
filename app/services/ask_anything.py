@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models import AskAnythingQuery, Event, Outlook, Scenario
 
 
@@ -132,9 +133,11 @@ ANSWER:"""
 
 def _call_llm(prompt: str) -> str:
     """Call LLM API. Falls back to rule-based response if no API key."""
+    settings = get_settings()
     api_key = os.getenv("OPENAI_API_KEY")
+    use_live_ai = settings.ai_mode.lower() == "live" and bool(api_key)
 
-    if api_key:
+    if use_live_ai:
         try:
             import httpx
 
@@ -171,7 +174,8 @@ def _generate_fallback_response(prompt: str) -> str:
 
 The question "{question}" relates to the geopolitical events and scenarios in the analyst's workspace.
 
-To provide a detailed AI-powered answer, please configure the OPENAI_API_KEY environment variable.
+Demo mode is active, so responses intentionally use deterministic mock logic.
+To enable live LLM responses, set AL_AI_MODE=live and configure OPENAI_API_KEY.
 
 Current data summary:
 - Review the recent events section for relevant intelligence items
