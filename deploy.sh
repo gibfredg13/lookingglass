@@ -89,7 +89,7 @@ install_or_append_admin_compose "$DOCKER_COMPOSE_FILE" "$ADMIN_COMPOSE_PATH"
 
 # 4. Build or pull images
 echo "✓ Building/pulling Docker images..."
-docker-compose -f $DOCKER_COMPOSE_FILE build --no-cache || true
+docker-compose -f $DOCKER_COMPOSE_FILE build --no-cache
 
 # 5. Start services
 echo "✓ Starting services..."

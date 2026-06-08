@@ -64,7 +64,7 @@ services:
     # Additional security
     security_opt:
       - no-new-privileges:true
-    read_only_root_filesystem: true
+    read_only: true
     tmpfs:
       - /tmp
       - /run
