@@ -14,3 +14,7 @@ data/*.db
 # Environment secrets
 .env
 
+# JetBrains IDE metadata
+.idea/
+*.iml
+
