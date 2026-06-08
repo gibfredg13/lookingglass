@@ -7,10 +7,47 @@ set -e
 ENVIRONMENT=${1:-production}
 PROJECT_NAME="analyst-lens"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
+ADMIN_COMPOSE_PATH="/home/admin/docker-compose.yml"
+MANAGED_BEGIN="# --- lookingglass managed block: begin ---"
+MANAGED_END="# --- lookingglass managed block: end ---"
 
 if [ "$ENVIRONMENT" = "production" ]; then
     DOCKER_COMPOSE_FILE="docker-compose.prod.yml"
 fi
+
+install_or_append_admin_compose() {
+    local source_file="$1"
+    local target_file="$2"
+
+    mkdir -p "$(dirname "$target_file")"
+
+    if [ ! -f "$target_file" ]; then
+        cp "$source_file" "$target_file"
+        echo "✓ Installed compose file to $target_file"
+        return
+    fi
+
+    # Keep this idempotent by replacing only the managed block on repeated runs.
+    local tmp_file
+    tmp_file=$(mktemp)
+
+    awk -v begin="$MANAGED_BEGIN" -v end="$MANAGED_END" '
+        $0 == begin {skip=1; next}
+        $0 == end {skip=0; next}
+        skip == 0 {print}
+    ' "$target_file" > "$tmp_file"
+
+    {
+        cat "$tmp_file"
+        echo ""
+        echo "$MANAGED_BEGIN"
+        cat "$source_file"
+        echo "$MANAGED_END"
+    } > "$target_file"
+
+    rm -f "$tmp_file"
+    echo "✓ Appended managed Lookingglass compose block to $target_file"
+}
 
 echo "================================"
 echo "Deploying to: $ENVIRONMENT"
@@ -46,15 +83,19 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# 3. Build or pull images
+# 3. Install/append compose content to /home/admin/docker-compose.yml
+echo "✓ Installing compose content at $ADMIN_COMPOSE_PATH..."
+install_or_append_admin_compose "$DOCKER_COMPOSE_FILE" "$ADMIN_COMPOSE_PATH"
+
+# 4. Build or pull images
 echo "✓ Building/pulling Docker images..."
 docker-compose -f $DOCKER_COMPOSE_FILE build --no-cache || true
 
-# 4. Start services
+# 5. Start services
 echo "✓ Starting services..."
 docker-compose -f $DOCKER_COMPOSE_FILE up -d
 
-# 5. Wait for database to be ready
+# 6. Wait for database to be ready
 echo "✓ Waiting for database..."
 sleep 5
 for i in {1..30}; do
@@ -71,7 +112,7 @@ for i in {1..30}; do
     sleep 1
 done
 
-# 6. Run migrations
+# 7. Run migrations
 echo "✓ Running database migrations..."
 docker-compose -f $DOCKER_COMPOSE_FILE exec -T api alembic upgrade head || {
     echo "✗ Migration failed. Rolling back..."
@@ -79,18 +120,18 @@ docker-compose -f $DOCKER_COMPOSE_FILE exec -T api alembic upgrade head || {
     exit 1
 }
 
-# 7. Seed demo data (development only)
+# 8. Seed demo data (development only)
 if [ "$ENVIRONMENT" != "production" ]; then
     echo "✓ Seeding demo data..."
     docker-compose -f $DOCKER_COMPOSE_FILE exec -T api python scripts/seed_demo.py || true
 fi
 
-# 8. Verify services
+# 9. Verify services
 echo "✓ Verifying services..."
 sleep 2
 docker-compose -f $DOCKER_COMPOSE_FILE ps
 
-# 9. Display access information
+# 10. Display access information
 echo ""
 echo "================================"
 echo "✓ Deployment Complete!"
